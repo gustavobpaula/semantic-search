@@ -1,0 +1,21 @@
+README.md
+  s_a7f77bda3799e5::t_b3914eb0b2ba03 37,43-61
+  s_a7f77bda3799e5::t_4bbc76dc47d90b 7-10
+  s_a7f77bda3799e5::t_fc7cc0b93f7286 80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "0472c720d621d6ab5d14f20b41839ec02c9b35a8",
+  "prompts": {},
+  "sessions": {
+    "s_a7f77bda3799e5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e1a12cc3-1966-44d8-9fcf-3f2b93ae809b",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Gustavo Bento de Paula <gustavob.paula@gmail.com>"
+    }
+  }
+}
