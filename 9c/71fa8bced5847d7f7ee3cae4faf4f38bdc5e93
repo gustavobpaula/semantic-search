@@ -1,0 +1,32 @@
+docs/specs/04-cli-chat.md
+  s_a7f77bda3799e5::t_210b4253dcecc7 5,9-11,14-15,18-20,23,28,39,48
+docs/specs/01-infrastructure.md
+  s_a7f77bda3799e5::t_c67f2350f1603e 9,11,18-19,30
+docs/SPEC.md
+  s_a7f77bda3799e5::t_d4293446566bc8 27-29,40
+docs/specs/02-pdf-ingestion.md
+  s_a7f77bda3799e5::t_76255e66e9125f 31
+docs/specs/03-semantic-retrieval.md
+  s_a7f77bda3799e5::t_765ba203fcbea1 5,12-42,49-51,57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "9c71fa8bced5847d7f7ee3cae4faf4f38bdc5e93",
+  "prompts": {},
+  "humans": {
+    "h_4c750985969531": {
+      "author": "Gustavo Bento de Paula <gustavob.paula@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_a7f77bda3799e5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e1a12cc3-1966-44d8-9fcf-3f2b93ae809b",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Gustavo Bento de Paula <gustavob.paula@gmail.com>"
+    }
+  }
+}
