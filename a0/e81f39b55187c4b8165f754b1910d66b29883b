@@ -1,0 +1,36 @@
+tests/test_ingestion_pipeline.py
+  s_9cce04ec711057::t_b50f2dabdfd585 7,14,26-28,39,42,83-103,112-126
+tests/test_configuration_errors.py
+  s_9cce04ec711057::t_4772f80728f8bf 52-58
+src/ingest.py
+  s_9cce04ec711057::t_7624cc6e4930e2 47-51
+  s_9cce04ec711057::t_08b11b9f5cc6c1 58-59
+  s_9cce04ec711057::t_606e12abae7d66 16-21
+  s_9cce04ec711057::t_1f5bd5a2a87824 52-57,61-75,79,81-83,90,94,104-109
+  s_9cce04ec711057::t_500675430c61e6 60,76-78,80
+  s_9cce04ec711057::t_67f6fc26510359 110
+tests/test_pgvector_persistence.py
+  s_9cce04ec711057::t_a0a892811fc492 11,15
+  s_9cce04ec711057::t_a997606f8b7363 28-36,38,40,45,61-78
+tests/conftest.py
+  s_9cce04ec711057::t_7c754e95e78c77 14-15,27,36-38,44-106,118,120
+README.md
+  s_9cce04ec711057::t_a4993b9bddaee9 118-123
+  s_9cce04ec711057::t_26b6722786c223 110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "a0e81f39b55187c4b8165f754b1910d66b29883b",
+  "prompts": {},
+  "sessions": {
+    "s_9cce04ec711057": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "681373d1-d33c-41fe-b92b-18eb9112e6cc",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Gustavo Bento de Paula <gustavob.paula@gmail.com>"
+    }
+  }
+}
