@@ -4,6 +4,10 @@ Ambiente local para ingestão de um PDF em PostgreSQL com pgVector e consulta
 semântica via OpenAI. Esta etapa configura a infraestrutura; os scripts de
 ingestão e chat serão adicionados nas próximas features.
 
+Este repositório é um fork de
+[devfullcycle/mba-ia-desafio-ingestao-busca](https://github.com/devfullcycle/mba-ia-desafio-ingestao-busca),
+o repositório de exemplo do desafio.
+
 ## Pré-requisitos
 
 - Python 3.11 ou superior
@@ -30,16 +34,31 @@ Instale as dependências:
 pip install -r requirements.txt
 ```
 
-Crie sua configuração local e preencha somente a chave da OpenAI:
+Crie sua configuração local:
 
 ```bash
 cp .env.example .env
 ```
 
-Edite `.env` e defina `OPENAI_API_KEY` com uma chave criada no painel da
-OpenAI. Não versione esse arquivo e não compartilhe a chave. Os modelos podem
-ser alterados por `OPENAI_EMBEDDING_MODEL` e `OPENAI_LLM_MODEL`; a ingestão e a
-busca deverão usar o mesmo modelo de embeddings.
+O `.env.example` vem do repositório de exemplo do desafio e entrega a maioria
+dos campos em branco. Edite `.env` e preencha os quatro valores abaixo:
+
+| Variável | Valor |
+|---|---|
+| `OPENAI_API_KEY` | uma chave criada no painel da OpenAI |
+| `DATABASE_URL` | `postgresql+psycopg://postgres:postgres@localhost:5432/rag` |
+| `PG_VECTOR_COLLECTION_NAME` | `document_embeddings` (ou outro nome de sua escolha) |
+| `PDF_PATH` | `document.pdf` |
+
+O prefixo `postgresql+psycopg://` em `DATABASE_URL` é exigido pelo
+`langchain-postgres` e não deve ser removido.
+
+`OPENAI_EMBEDDING_MODEL` e `OPENAI_LLM_MODEL` já vêm com valores utilizáveis e
+podem ser trocados; a ingestão e a busca devem usar o mesmo modelo de
+embeddings. As variáveis `GOOGLE_*` são herdadas do repositório de exemplo e
+não são usadas por este projeto — deixe-as como estão.
+
+Não versione o `.env` e não compartilhe a chave.
 
 ## Banco de dados
 
@@ -58,7 +77,7 @@ docker compose exec postgres psql -U postgres -d rag -c "SELECT extversion FROM 
 
 O banco fica disponível em `localhost:5432`, com usuário `postgres`, senha
 `postgres` e banco `rag`. Esses valores são defaults exclusivamente locais e
-correspondem a `DATABASE_URL` em `.env.example`.
+compõem a `DATABASE_URL` indicada na seção anterior.
 
 Para parar o banco preservando seus dados:
 
