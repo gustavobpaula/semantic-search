@@ -4,13 +4,14 @@ import pytest
 
 import ingest
 import vector_store
+from conftest import PAGINAS_DE_AMOSTRA, FakeEmbeddings
 from config import Settings
 
 
 def test_ingestao_carrega_o_pdf_configurado(settings, recording_store):
     resumo = ingest.ingest(settings=settings, store=recording_store)
 
-    assert resumo["documentos"] == 34
+    assert resumo["documentos"] == PAGINAS_DE_AMOSTRA
     assert resumo["chunks"] == len(recording_store.added_documents)
     assert resumo["collection"] == settings.collection_name
 
@@ -22,6 +23,9 @@ class StoreQueVetoriza:
         self.embeddings = embeddings
         self.vetores = []
 
+    def similarity_search_by_vector(self, embedding, k=4):
+        return []
+
     def add_documents(self, documents):
         self.vetores.extend(
             self.embeddings.embed_documents([documento.page_content for documento in documents])
@@ -32,9 +36,10 @@ def test_cada_chunk_produzido_vira_um_embedding(settings, fake_embeddings):
     chunks = ingest.split_documents(ingest.load_documents(settings.pdf_path))
     store = StoreQueVetoriza(fake_embeddings)
 
-    ingest.ingest(settings=settings, store=store)
+    ingest.ingest(settings=settings, store=store, embeddings=fake_embeddings)
 
     assert len(store.vetores) == len(chunks)
+    # A sondagem de dimensão usa embed_query, então só os chunks entram aqui.
     assert fake_embeddings.embedded_texts == [chunk.page_content for chunk in chunks]
 
 
@@ -75,7 +80,27 @@ def test_clientes_sao_construidos_a_partir_da_configuracao(monkeypatch):
     assert argumentos["store"]["connection"] == settings.database_url
 
 
-def test_erro_de_dimensao_orienta_a_recriar_a_collection(settings):
+def test_dimensao_divergente_interrompe_antes_de_gravar(settings, fake_embeddings):
+    class StoreDeOutraDimensao:
+        def __init__(self):
+            self.added_documents = []
+
+        def similarity_search_by_vector(self, embedding, k=4):
+            raise ValueError("different vector dimensions 8 and 1536")
+
+        def add_documents(self, documents):
+            self.added_documents.extend(documents)
+
+    store = StoreDeOutraDimensao()
+
+    with pytest.raises(ingest.IngestionError) as erro:
+        ingest.ingest(settings=settings, store=store, embeddings=fake_embeddings)
+
+    assert "Remova a collection ou o volume" in str(erro.value)
+    assert store.added_documents == []
+
+
+def test_erro_de_dimensao_na_escrita_tambem_orienta_a_recriar(settings):
     class StoreIncompativel:
         def add_documents(self, documents):
             raise ValueError("expected 1536 dimensions, not 768")
@@ -84,3 +109,18 @@ def test_erro_de_dimensao_orienta_a_recriar_a_collection(settings):
         ingest.ingest(settings=settings, store=StoreIncompativel())
 
     assert "Remova a collection ou o volume" in str(erro.value)
+
+
+def test_falha_de_conexao_vira_mensagem_clara(settings, monkeypatch):
+    def recusa_conexao(*args, **kwargs):
+        raise RuntimeError("connection failed: FATAL: password authentication failed")
+
+    monkeypatch.setattr(ingest, "build_vector_store", recusa_conexao)
+    monkeypatch.setattr(ingest, "build_embeddings", lambda settings: FakeEmbeddings())
+
+    with pytest.raises(ingest.IngestionError) as erro:
+        ingest.ingest(settings=settings)
+
+    mensagem = str(erro.value)
+    assert "Não foi possível conectar ao PostgreSQL" in mensagem
+    assert "docker compose up -d" in mensagem

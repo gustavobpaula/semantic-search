@@ -49,6 +49,13 @@ def test_a_chave_da_openai_nao_e_exposta():
     assert "chave-secreta-de-teste" not in repr(settings)
 
 
+def test_pdf_de_amostra_e_legivel(pdf_de_amostra):
+    documentos = ingest.load_documents(str(pdf_de_amostra))
+
+    assert len(documentos) == 3
+    assert documentos[0].page_content.startswith("pagina0palavra0")
+
+
 def test_pdf_ausente_falha_com_mensagem_clara(tmp_path):
     caminho = tmp_path / "inexistente.pdf"
 

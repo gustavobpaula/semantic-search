@@ -107,7 +107,7 @@ grava tudo na collection `PG_VECTOR_COLLECTION_NAME`. Ao final ele imprime um
 resumo:
 
 ```text
-Ingestão concluída: 34 documentos, 68 chunks na collection 'document_embeddings'.
+Ingestão concluída: 34 documentos, 67 chunks na collection 'document_embeddings'.
 ```
 
 Falhas de configuração, PDF ausente ou ilegível e erros de banco ou da OpenAI
@@ -115,8 +115,12 @@ interrompem a execução com mensagem explicativa e código de saída 1.
 
 Cada execução **acrescenta** chunks à collection: rodar a ingestão duas vezes
 duplica o conteúdo. Para reingerir do zero, apague a collection (ou o volume,
-com `docker compose down -v`) antes. O mesmo vale ao trocar o modelo de
-embeddings por outro de dimensão diferente.
+com `docker compose down -v`) antes.
+
+Ao trocar `OPENAI_EMBEDDING_MODEL` por um modelo de dimensão diferente, a
+ingestão se recusa a gravar e pede a remoção da collection ou do volume — sem
+isso a collection ficaria com vetores de tamanhos distintos e a busca deixaria
+de funcionar.
 
 ## Testes
 
