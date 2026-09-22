@@ -1,8 +1,8 @@
 # Busca semântica com LangChain e pgVector
 
 Ambiente local para ingestão de um PDF em PostgreSQL com pgVector e consulta
-semântica via OpenAI. Esta etapa configura a infraestrutura; os scripts de
-ingestão e chat serão adicionados nas próximas features.
+semântica via OpenAI. A infraestrutura e a ingestão já estão disponíveis; a
+busca semântica e o chat serão adicionados nas próximas features.
 
 Este repositório é um fork de
 [devfullcycle/mba-ia-desafio-ingestao-busca](https://github.com/devfullcycle/mba-ia-desafio-ingestao-busca),
@@ -93,9 +93,51 @@ banco local e seu volume, use o comando destrutivo abaixo:
 docker compose down -v
 ```
 
+## Ingestão
+
+Com o banco no ar e o `.env` preenchido, ingira o PDF indicado por `PDF_PATH`:
+
+```bash
+python src/ingest.py
+```
+
+O script carrega o PDF, divide o conteúdo em chunks de 1000 caracteres com 150
+de sobreposição, gera um embedding por chunk com `OPENAI_EMBEDDING_MODEL` e
+grava tudo na collection `PG_VECTOR_COLLECTION_NAME`. Ao final ele imprime um
+resumo:
+
+```text
+Ingestão concluída: 34 documentos, 68 chunks na collection 'document_embeddings'.
+```
+
+Falhas de configuração, PDF ausente ou ilegível e erros de banco ou da OpenAI
+interrompem a execução com mensagem explicativa e código de saída 1.
+
+Cada execução **acrescenta** chunks à collection: rodar a ingestão duas vezes
+duplica o conteúdo. Para reingerir do zero, apague a collection (ou o volume,
+com `docker compose down -v`) antes. O mesmo vale ao trocar o modelo de
+embeddings por outro de dimensão diferente.
+
+## Testes
+
+```bash
+pytest
+```
+
+A suíte padrão é offline: usa dublês no lugar da OpenAI e do banco. O teste de
+integração com pgVector é opt-in e exige o banco no ar:
+
+```bash
+TEST_DATABASE_URL='postgresql+psycopg://postgres:postgres@localhost:5432/rag' pytest -m integration
+```
+
+Ele cria uma collection temporária com embeddings falsos e a remove ao final,
+sem tocar na collection da aplicação.
+
 ## Próximas etapas
 
-Após as features de ingestão e chat serem implementadas, o fluxo completo será:
+O chat do terminal (`python src/chat.py`) será implementado nas próximas
+features, completando o fluxo:
 
 ```bash
 docker compose up -d
