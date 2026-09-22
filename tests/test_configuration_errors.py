@@ -8,6 +8,7 @@ from config import ConfigError, load_settings
 AMBIENTE_COMPLETO = {
     "OPENAI_API_KEY": "chave-secreta-de-teste",
     "OPENAI_EMBEDDING_MODEL": "text-embedding-3-small",
+    "OPENAI_LLM_MODEL": "gpt-4o-mini",
     "DATABASE_URL": "postgresql+psycopg://postgres:postgres@localhost:5432/rag",
     "PG_VECTOR_COLLECTION_NAME": "document_embeddings",
     "PDF_PATH": "document.pdf",
@@ -20,6 +21,7 @@ def test_configuracao_completa_produz_settings():
     assert settings.pdf_path == "document.pdf"
     assert settings.collection_name == "document_embeddings"
     assert settings.embedding_model == "text-embedding-3-small"
+    assert settings.llm_model == "gpt-4o-mini"
     assert settings.database_url == AMBIENTE_COMPLETO["DATABASE_URL"]
 
 

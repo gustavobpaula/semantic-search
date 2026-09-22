@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 REQUIRED_VARIABLES = (
     "OPENAI_API_KEY",
     "OPENAI_EMBEDDING_MODEL",
+    "OPENAI_LLM_MODEL",
     "DATABASE_URL",
     "PG_VECTOR_COLLECTION_NAME",
     "PDF_PATH",
@@ -25,6 +26,7 @@ class Settings:
     database_url: str
     collection_name: str
     embedding_model: str
+    llm_model: str
 
 
 def load_settings(env: Mapping[str, str] | None = None) -> Settings:
@@ -49,4 +51,5 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         database_url=env["DATABASE_URL"].strip(),
         collection_name=env["PG_VECTOR_COLLECTION_NAME"].strip(),
         embedding_model=env["OPENAI_EMBEDDING_MODEL"].strip(),
+        llm_model=env["OPENAI_LLM_MODEL"].strip(),
     )

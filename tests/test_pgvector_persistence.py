@@ -1,4 +1,4 @@
-"""AC-4: chunks e vetores podem ser recuperados da collection no PostgreSQL.
+"""Integração com pgVector: persistência (spec 02 AC-4) e recuperação (spec 03).
 
 Opt-in: exige um banco com pgVector indicado por TEST_DATABASE_URL, por exemplo
 `postgresql+psycopg://postgres:postgres@localhost:5432/rag`.
@@ -12,8 +12,9 @@ from langchain_core.documents import Document
 from langchain_postgres import PGVector
 
 import ingest
-from conftest import FakeEmbeddings
+from conftest import FakeEmbeddings, RecordingLLM
 from config import Settings
+from search import search_prompt
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL")
 
@@ -41,6 +42,7 @@ def collection_temporaria(pdf_do_desafio, fake_embeddings):
         database_url=TEST_DATABASE_URL,
         collection_name=f"teste_ingestao_{uuid.uuid4().hex}",
         embedding_model="fake",
+        llm_model="fake",
     )
     store = _conectar(settings, fake_embeddings)
     yield settings, store
@@ -76,3 +78,25 @@ def test_modelo_de_outra_dimensao_e_recusado_sem_gravar(collection_temporaria):
     assert "Remova a collection ou o volume" in str(erro.value)
     # Nada foi acrescentado: a collection segue com o único documento original.
     assert len(store.similarity_search_with_score("conteúdo", k=10)) == 1
+
+
+def test_a_pergunta_e_vetorizada_e_recupera_chunks_da_collection(
+    collection_temporaria, fake_embeddings
+):
+    """Spec 03 AC-1 e AC-2: a pergunta vira embedding e consulta a collection ingerida."""
+    settings, store = collection_temporaria
+    ingest.ingest(settings=settings, store=store)
+    fake_embeddings.embedded_queries.clear()
+
+    llm = RecordingLLM()
+    cadeia = search_prompt(settings=settings, store=store, llm=llm)
+    resposta = cadeia.invoke("qual o faturamento?")
+
+    assert fake_embeddings.embedded_queries == ["qual o faturamento?"]
+    assert resposta == "resposta da LLM"
+
+    recuperados = store.similarity_search_with_score("qual o faturamento?", k=10)
+    contexto = llm.prompts[0].split("CONTEXTO:")[1].split("REGRAS:")[0]
+    assert len(recuperados) == 10
+    for documento, _score in recuperados:
+        assert documento.page_content in contexto

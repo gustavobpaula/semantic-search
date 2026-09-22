@@ -40,6 +40,7 @@ Converter uma pergunta em embedding, recuperar do PostgreSQL os dez chunks seman
   ```
 
 - **FR-6:** `search_prompt()` deve devolver um encadeamento reutilizável que aceita uma pergunta e produz a resposta da LLM.
+- **FR-7:** Quando a busca não recuperar nenhum chunk, o encadeamento deve responder exatamente `Não tenho informações necessárias para responder sua pergunta.` sem acionar a LLM.
 
 ## Acceptance Criteria
 
@@ -49,6 +50,7 @@ Converter uma pergunta em embedding, recuperar do PostgreSQL os dez chunks seman
 - **AC-4 [FR-4]:** O campo `CONTEXTO` contém os conteúdos recuperados na ordem de relevância devolvida pela busca.
 - **AC-5 [FR-5]:** O prompt enviado à LLM reproduz o texto obrigatório sem remover ou enfraquecer suas regras.
 - **AC-6 [FR-6]:** O encadeamento pode ser criado uma vez e invocado para várias perguntas.
+- **AC-7 [FR-7]:** Com a collection vazia ou sem resultados para a pergunta, a resposta é exatamente a mensagem de insuficiência e nenhuma chamada à LLM é feita.
 
 ## Constraints
 
@@ -63,7 +65,7 @@ Converter uma pergunta em embedding, recuperar do PostgreSQL os dez chunks seman
 
 ## Edge Cases
 
-- Collection vazia ou ainda não criada.
+- Collection vazia ou ainda não criada (resolvida por `FR-7`).
 - Menos de dez chunks disponíveis.
 - Modelo de consulta incompatível com a dimensão da collection.
 

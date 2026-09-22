@@ -6,6 +6,7 @@ import ingest
 import vector_store
 from conftest import PAGINAS_DE_AMOSTRA, FakeEmbeddings
 from config import Settings
+from search import SearchError
 
 
 def test_ingestao_carrega_o_pdf_configurado(settings, recording_store):
@@ -59,6 +60,7 @@ def test_clientes_sao_construidos_a_partir_da_configuracao(monkeypatch):
         database_url="postgresql+psycopg://usuario:senha@localhost:5432/rag",
         collection_name="minha_collection",
         embedding_model="modelo-de-embeddings",
+        llm_model="modelo-de-llm",
     )
     argumentos = {}
 
@@ -72,12 +74,19 @@ def test_clientes_sao_construidos_a_partir_da_configuracao(monkeypatch):
         "PGVector",
         lambda **kwargs: argumentos.setdefault("store", kwargs),
     )
+    monkeypatch.setattr(
+        vector_store,
+        "ChatOpenAI",
+        lambda **kwargs: argumentos.setdefault("llm", kwargs),
+    )
 
     vector_store.build_vector_store(settings, vector_store.build_embeddings(settings))
+    vector_store.build_llm(settings)
 
     assert argumentos["embeddings"]["model"] == "modelo-de-embeddings"
     assert argumentos["store"]["collection_name"] == "minha_collection"
     assert argumentos["store"]["connection"] == settings.database_url
+    assert argumentos["llm"]["model"] == "modelo-de-llm"
 
 
 def test_dimensao_divergente_interrompe_antes_de_gravar(settings, fake_embeddings):
@@ -111,11 +120,11 @@ def test_erro_de_dimensao_na_escrita_tambem_orienta_a_recriar(settings):
     assert "Remova a collection ou o volume" in str(erro.value)
 
 
-def test_falha_de_conexao_vira_mensagem_clara(settings, monkeypatch):
+def test_falha_de_conexao_na_ingestao_vira_mensagem_clara(settings, monkeypatch):
     def recusa_conexao(*args, **kwargs):
         raise RuntimeError("connection failed: FATAL: password authentication failed")
 
-    monkeypatch.setattr(ingest, "build_vector_store", recusa_conexao)
+    monkeypatch.setattr(vector_store, "PGVector", recusa_conexao)
     monkeypatch.setattr(ingest, "build_embeddings", lambda settings: FakeEmbeddings())
 
     with pytest.raises(ingest.IngestionError) as erro:
@@ -124,3 +133,21 @@ def test_falha_de_conexao_vira_mensagem_clara(settings, monkeypatch):
     mensagem = str(erro.value)
     assert "Não foi possível conectar ao PostgreSQL" in mensagem
     assert "docker compose up -d" in mensagem
+
+
+@pytest.mark.parametrize("classe_de_erro", [ingest.IngestionError, SearchError])
+def test_wrapper_de_conexao_traduz_o_erro_de_cada_capacidade(
+    monkeypatch, settings, fake_embeddings, classe_de_erro
+):
+    """O wrapper compartilhado traduz a falha no tipo de erro de cada capacidade."""
+
+    def explode(**kwargs):
+        raise RuntimeError("could not connect to server")
+
+    monkeypatch.setattr(vector_store, "PGVector", explode)
+
+    with pytest.raises(classe_de_erro) as erro:
+        vector_store.connect_vector_store(settings, fake_embeddings, classe_de_erro)
+
+    assert "Não foi possível conectar ao PostgreSQL" in str(erro.value)
+    assert "could not connect to server" in str(erro.value)

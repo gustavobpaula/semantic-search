@@ -8,16 +8,15 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from config import ConfigError, Settings, load_settings
-from vector_store import build_embeddings, build_vector_store
+from vector_store import (
+    DICA_DE_DIMENSAO,
+    build_embeddings,
+    connect_vector_store,
+    primeira_linha,
+)
 
 CHUNK_SIZE = 1000
 CHUNK_OVERLAP = 150
-
-DICA_DE_DIMENSAO = (
-    "A collection já contém vetores de outra dimensão, gerados por um modelo de "
-    "embeddings diferente. Remova a collection ou o volume do banco e refaça a "
-    "ingestão."
-)
 
 
 class IngestionError(Exception):
@@ -44,23 +43,6 @@ def split_documents(documents: list[Document]) -> list[Document]:
     return [chunk for chunk in chunks if chunk.page_content.strip()]
 
 
-def _primeira_linha(error: Exception) -> str:
-    """Resumo legível do erro; a causa completa segue encadeada na exceção."""
-    return str(error).splitlines()[0]
-
-
-def connect_vector_store(settings: Settings, embeddings) -> object:
-    """Conecta na collection, traduzindo falhas de banco em mensagem clara."""
-    try:
-        return build_vector_store(settings, embeddings)
-    except Exception as error:
-        raise IngestionError(
-            "Não foi possível conectar ao PostgreSQL. Verifique DATABASE_URL no "
-            ".env e se o banco está no ar (`docker compose up -d`).\n"
-            f"Detalhe: {_primeira_linha(error)}"
-        ) from error
-
-
 def ensure_compatible_dimension(store, embeddings) -> None:
     """Falha antes de gravar quando a collection tem outra dimensão.
 
@@ -74,10 +56,10 @@ def ensure_compatible_dimension(store, embeddings) -> None:
     except Exception as error:
         if "dimension" in str(error).lower():
             raise IngestionError(
-                f"{DICA_DE_DIMENSAO}\nDetalhe: {_primeira_linha(error)}"
+                f"{DICA_DE_DIMENSAO}\nDetalhe: {primeira_linha(error)}"
             ) from error
         raise IngestionError(
-            f"Falha ao consultar a collection antes da ingestão: {_primeira_linha(error)}"
+            f"Falha ao consultar a collection antes da ingestão: {primeira_linha(error)}"
         ) from error
 
 
@@ -103,7 +85,7 @@ def ingest(settings: Settings | None = None, store=None, embeddings=None) -> dic
 
     if store is None:
         embeddings = embeddings or build_embeddings(settings)
-        store = connect_vector_store(settings, embeddings)
+        store = connect_vector_store(settings, embeddings, IngestionError)
 
     if embeddings is not None:
         ensure_compatible_dimension(store, embeddings)

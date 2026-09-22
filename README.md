@@ -54,7 +54,8 @@ O prefixo `postgresql+psycopg://` em `DATABASE_URL` é exigido pelo
 `langchain-postgres` e não deve ser removido.
 
 `OPENAI_EMBEDDING_MODEL` e `OPENAI_LLM_MODEL` já vêm com valores utilizáveis e
-podem ser trocados; a ingestão e a busca devem usar o mesmo modelo de
+podem ser trocados, mas as duas são obrigatórias: deixá-las em branco
+interrompe a execução. A ingestão e a busca devem usar o mesmo modelo de
 embeddings. As variáveis `GOOGLE_*` são herdadas do repositório de exemplo e
 não são usadas por este projeto — deixe-as como estão.
 

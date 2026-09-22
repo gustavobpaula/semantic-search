@@ -1,7 +1,10 @@
 import hashlib
 
 import pytest
+from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
+from langchain_core.messages import AIMessage
+from langchain_core.runnables import Runnable
 
 from config import Settings
 
@@ -14,12 +17,14 @@ class FakeEmbeddings(Embeddings):
     def __init__(self, dimension: int = EMBEDDING_DIMENSION):
         self.dimension = dimension
         self.embedded_texts: list[str] = []
+        self.embedded_queries: list[str] = []
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         self.embedded_texts.extend(texts)
         return [self._vector(text) for text in texts]
 
     def embed_query(self, text: str) -> list[float]:
+        self.embedded_queries.append(text)
         return self._vector(text)
 
     def _vector(self, text: str) -> list[float]:
@@ -39,6 +44,40 @@ class RecordingStore:
     def add_documents(self, documents):
         self.added_documents.extend(documents)
         return [str(index) for index in range(len(documents))]
+
+
+class FakeVectorStore:
+    """Store falso que devolve resultados fixos e registra a consulta."""
+
+    def __init__(self, conteudos: list[str], erro: Exception | None = None):
+        self.resultados = [
+            (Document(page_content=conteudo), 1.0 - indice / 100)
+            for indice, conteudo in enumerate(conteudos)
+        ]
+        self.erro = erro
+        self.consultas: list[tuple[str, int]] = []
+
+    def similarity_search_with_score(self, query, k=4):
+        self.consultas.append((query, k))
+        if self.erro is not None:
+            raise self.erro
+        return self.resultados[:k]
+
+
+class RecordingLLM(Runnable):
+    """LLM falsa que guarda o prompt recebido e responde algo fixo.
+
+    É um `Runnable` para poder ocupar o lugar do modelo real no
+    encadeamento, sem nenhuma chamada à OpenAI.
+    """
+
+    def __init__(self, resposta: str = "resposta da LLM"):
+        self.resposta = resposta
+        self.prompts: list[str] = []
+
+    def invoke(self, prompt_value, config=None, **kwargs):
+        self.prompts.append(prompt_value.to_string())
+        return AIMessage(content=self.resposta)
 
 
 def build_pdf(paginas: list[str]) -> bytes:
@@ -115,10 +154,16 @@ def recording_store() -> RecordingStore:
 
 
 @pytest.fixture
+def recording_llm() -> RecordingLLM:
+    return RecordingLLM()
+
+
+@pytest.fixture
 def settings(pdf_de_amostra) -> Settings:
     return Settings(
         pdf_path=str(pdf_de_amostra),
         database_url="postgresql+psycopg://postgres:postgres@localhost:5432/rag",
         collection_name="collection_de_teste",
         embedding_model="text-embedding-3-small",
+        llm_model="gpt-4o-mini",
     )
