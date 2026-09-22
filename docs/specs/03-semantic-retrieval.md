@@ -2,26 +2,59 @@
 
 ## Goal
 
-Converter uma pergunta em embedding e recuperar do PostgreSQL os dez chunks semanticamente mais relevantes para uso como contexto da resposta.
+Converter uma pergunta em embedding, recuperar do PostgreSQL os dez chunks semanticamente mais relevantes e montar, com eles, o prompt obrigatório enviado à LLM.
 
 ## Functional Requirements
 
 - **FR-1:** `src/search.py` deve vetorizar a pergunta usando o mesmo modelo de embeddings configurado para a ingestão.
 - **FR-2:** A busca deve consultar a mesma collection preenchida por `docs/specs/02-pdf-ingestion.md`.
 - **FR-3:** A busca deve usar similaridade com score e `k=10`.
-- **FR-4:** O resultado deve disponibilizar o conteúdo dos chunks recuperados para composição do contexto do chat.
+- **FR-4:** Os conteúdos dos chunks recuperados devem ser concatenados no campo `CONTEXTO` do prompt, na ordem retornada pelo mecanismo de busca.
+- **FR-5:** `src/search.py` deve expor `search_prompt()`, que monta o prompt obrigatório abaixo e o encadeia com a LLM OpenAI configurada externamente por `OPENAI_LLM_MODEL`:
+
+  ```text
+  CONTEXTO:
+  {contexto}
+
+  REGRAS:
+  - Responda somente com base no CONTEXTO.
+  - Se a informação não estiver explicitamente no CONTEXTO, responda:
+    "Não tenho informações necessárias para responder sua pergunta."
+  - Nunca invente ou use conhecimento externo.
+  - Nunca produza opiniões ou interpretações além do que está escrito.
+
+  EXEMPLOS DE PERGUNTAS FORA DO CONTEXTO:
+  Pergunta: "Qual é a capital da França?"
+  Resposta: "Não tenho informações necessárias para responder sua pergunta."
+
+  Pergunta: "Quantos clientes temos em 2024?"
+  Resposta: "Não tenho informações necessárias para responder sua pergunta."
+
+  Pergunta: "Você acha isso bom ou ruim?"
+  Resposta: "Não tenho informações necessárias para responder sua pergunta."
+
+  PERGUNTA DO USUÁRIO:
+  {pergunta}
+
+  RESPONDA A "PERGUNTA DO USUÁRIO"
+  ```
+
+- **FR-6:** `search_prompt()` deve devolver um encadeamento reutilizável que aceita uma pergunta e produz a resposta da LLM.
 
 ## Acceptance Criteria
 
 - **AC-1 [FR-1]:** Uma pergunta recebida pela busca é convertida em embedding antes da consulta vetorial.
 - **AC-2 [FR-2]:** A consulta usa a collection que recebeu os chunks durante a ingestão.
 - **AC-3 [FR-3]:** A operação de busca é executada com `similarity_search_with_score(query, k=10)`.
-- **AC-4 [FR-4]:** O chamador recebe os conteúdos recuperados em ordem de relevância do mecanismo de busca.
+- **AC-4 [FR-4]:** O campo `CONTEXTO` contém os conteúdos recuperados na ordem de relevância devolvida pela busca.
+- **AC-5 [FR-5]:** O prompt enviado à LLM reproduz o texto obrigatório sem remover ou enfraquecer suas regras.
+- **AC-6 [FR-6]:** O encadeamento pode ser criado uma vez e invocado para várias perguntas.
 
 ## Constraints
 
 - Aplicam-se as restrições globais de `docs/SPEC.md`.
 - O modelo de embeddings da consulta deve ser compatível com a dimensão da collection.
+- O texto do prompt obrigatório não pode ser alterado.
 
 ## Assumptions
 

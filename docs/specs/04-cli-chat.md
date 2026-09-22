@@ -2,49 +2,30 @@
 
 ## Goal
 
-Permitir que o usuário faça perguntas no terminal e receba respostas da LLM fundamentadas exclusivamente nos chunks recuperados do PDF.
+Permitir que o usuário faça perguntas no terminal, em interação contínua, e receba respostas da LLM fundamentadas exclusivamente nos chunks recuperados do PDF.
 
 ## Functional Requirements
 
-- **FR-1:** `src/chat.py` deve receber uma pergunta do usuário pela linha de comando.
-- **FR-2:** O chat deve obter os dez resultados mais relevantes por meio da busca definida em `docs/specs/03-semantic-retrieval.md`.
-- **FR-3:** Os conteúdos recuperados devem ser concatenados no campo `CONTEXTO` do prompt.
-- **FR-4:** O prompt enviado à LLM deve seguir este formato e estas regras:
-
-  ```text
-  CONTEXTO:
-  {resultados concatenados do banco de dados}
-
-  REGRAS:
-  - Responda somente com base no CONTEXTO.
-  - Se a informação não estiver explicitamente no CONTEXTO,
-  responda:
-  "Não tenho informações necessárias para responder sua pergunta."
-  - Nunca invente ou use conhecimento externo.
-  - Nunca produza opiniões ou interpretações além do que está escrito.
-
-  PERGUNTA DO USUÁRIO:
-  {pergunta do usuário}
-
-  RESPONDA A "PERGUNTA DO USUÁRIO"
-  ```
-
-- **FR-5:** O chat deve chamar a LLM OpenAI configurada externamente e exibir a resposta no terminal.
+- **FR-1:** `src/chat.py` deve simular um chat no terminal, recebendo perguntas do usuário de forma repetida e apresentando cada resposta antes de solicitar a próxima.
+- **FR-2:** O chat deve obter a resposta por meio do encadeamento definido em `docs/specs/03-semantic-retrieval.md FR-5`, criado uma vez e reutilizado nas perguntas seguintes.
+- **FR-5:** O chat deve exibir a resposta no terminal distinguindo pergunta e resposta, como no exemplo do briefing (`PERGUNTA:` e `RESPOSTA:`).
 - **FR-6:** Quando a informação não estiver explícita no contexto, a resposta deve ser exatamente `Não tenho informações necessárias para responder sua pergunta.`
+
+`FR-3` e `FR-4` foram movidos para `docs/specs/03-semantic-retrieval.md` (`FR-4` e `FR-5`). Os identificadores permanecem vagos para não renumerar os demais.
 
 ## Acceptance Criteria
 
-- **AC-1 [FR-1]:** `python src/chat.py` permite informar uma pergunta e apresenta uma resposta.
-- **AC-2 [FR-2, FR-3]:** Cada pergunta dispara a recuperação com `k=10` e insere os conteúdos retornados no contexto do prompt.
-- **AC-3 [FR-4, FR-5]:** A LLM recebe o contexto, as regras e a pergunta do usuário antes de gerar a resposta.
+- **AC-1 [FR-1]:** `python src/chat.py` permite informar várias perguntas em sequência, apresentando uma resposta para cada uma.
+- **AC-2 [FR-2]:** Cada pergunta é respondida pelo encadeamento de recuperação, com `k=10`, sem que o chat monte o prompt por conta própria.
+- **AC-3 [FR-5]:** A resposta é exibida no terminal associada à pergunta correspondente.
 - **AC-4 [FR-6]:** Uma pergunta cuja resposta não esteja explícita no contexto produz exatamente a mensagem de insuficiência definida.
 - **AC-5 [FR-6]:** Uma solicitação de opinião ou interpretação produz a mesma mensagem de insuficiência.
-- **AC-6 [FR-4]:** Uma resposta válida não contém fatos que não estejam sustentados pelo contexto recuperado.
+- **AC-6 [FR-6]:** Uma resposta válida não contém fatos que não estejam sustentados pelo contexto recuperado.
 
 ## Constraints
 
 - Aplicam-se as restrições globais de `docs/SPEC.md`.
-- O chat deve usar o prompt obrigatório sem remover ou enfraquecer suas regras.
+- O chat não deve montar nem alterar o prompt obrigatório; ele pertence a `docs/specs/03-semantic-retrieval.md FR-5`.
 
 ## Assumptions
 
@@ -55,6 +36,7 @@ Permitir que o usuário faça perguntas no terminal e receba respostas da LLM fu
 - Nenhum resultado recuperado.
 - Pergunta sobre conteúdo ausente.
 - Solicitação de opinião ou interpretação.
+- Entrada vazia informada pelo usuário.
 
 ## Out of Scope
 
@@ -63,4 +45,4 @@ Permitir que o usuário faça perguntas no terminal e receba respostas da LLM fu
 
 ## Open Questions
 
-- Nenhuma questão permanece aberta.
+- Como o usuário encerra a sessão de chat e o que acontece diante de uma entrada vazia? O briefing não define comando de saída nem política para entrada vazia.

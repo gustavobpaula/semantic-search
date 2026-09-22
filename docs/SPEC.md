@@ -24,7 +24,9 @@ Entregar uma aplicação em Python que ingira um PDF no PostgreSQL com pgVector 
 ## Constraints
 
 - A implementação deve usar Python, LangChain, PostgreSQL com pgVector e Docker Compose.
-- O provedor de embeddings e LLM deve ser OpenAI por meio da integração do LangChain.
+- O repositório deve ser um fork do repositório de exemplo do desafio, `devfullcycle/mba-ia-desafio-ingestao-busca`.
+- O `docker-compose.yml` utilizado deve ser o fornecido pelo repositório de exemplo.
+- O briefing permite escolher OpenAI ou Gemini como provedor. Este projeto escolhe OpenAI, acessado por meio da integração do LangChain.
 - A chave de API e os identificadores dos modelos devem ser configurações externas.
 - Os identificadores dos modelos não devem ser fixados nesta especificação.
 - A estrutura deve conter `docker-compose.yml`, `requirements.txt`, `.env.example`, `src/ingest.py`, `src/search.py`, `src/chat.py`, `document.pdf` e `README.md`.
@@ -35,7 +37,7 @@ Entregar uma aplicação em Python que ingira um PDF no PostgreSQL com pgVector 
 
 ## Assumptions
 
-- `document.pdf` é o único documento exigido para a execução do desafio.
+- `document.pdf` é o único documento exigido para a execução do desafio e é o fornecido pelo repositório de exemplo.
 - Um modelo de embeddings e um modelo de LLM disponíveis serão selecionados no momento da implementação.
 
 ## Edge Cases

@@ -28,6 +28,7 @@ Ler `document.pdf`, dividi-lo conforme os parâmetros obrigatórios, gerar embed
 
 ## Assumptions
 
+- `document.pdf` é o arquivo fornecido pelo repositório de exemplo do desafio.
 - O PDF contém texto que pode ser extraído pelo carregador escolhido.
 - A collection é criada na primeira ingestão com a dimensão do modelo configurado.
 
