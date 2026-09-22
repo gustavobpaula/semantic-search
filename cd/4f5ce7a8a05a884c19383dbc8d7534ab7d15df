@@ -1,0 +1,24 @@
+docs/specs/01-infrastructure.md
+  h_ab4cd9ae44a449 1-42
+docs/challenge.md
+  h_ab4cd9ae44a449 1-179
+docs/specs/03-semantic-retrieval.md
+  h_ab4cd9ae44a449 1-43
+docs/specs/04-cli-chat.md
+  h_ab4cd9ae44a449 1-66
+docs/SPEC.md
+  h_ab4cd9ae44a449 1-51
+docs/specs/02-pdf-ingestion.md
+  h_ab4cd9ae44a449 1-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "cd4f5ce7a8a05a884c19383dbc8d7534ab7d15df",
+  "prompts": {},
+  "humans": {
+    "h_ab4cd9ae44a449": {
+      "author": "Gabriela Bento de Paula <bentogabi@MacBook-Air-de-Gabriela.local>"
+    }
+  }
+}
