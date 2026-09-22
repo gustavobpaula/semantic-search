@@ -1,0 +1,19 @@
+docs/ARCHITECTURE.md
+  s_77311cf0234798::t_546a2082b4be3a 1-101
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "ebf393334f72fc9f32964edb5dccbee536279c57",
+  "prompts": {},
+  "sessions": {
+    "s_77311cf0234798": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0c6d7-b2ab-7942-be7c-e4301a5de622",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Gustavo Bento de Paula <gustavob.paula@gmail.com>"
+    }
+  }
+}
