@@ -71,12 +71,15 @@ class RecordingLLM(Runnable):
     encadeamento, sem nenhuma chamada à OpenAI.
     """
 
-    def __init__(self, resposta: str = "resposta da LLM"):
+    def __init__(self, resposta: str = "resposta da LLM", erro: Exception | None = None):
         self.resposta = resposta
+        self.erro = erro
         self.prompts: list[str] = []
 
     def invoke(self, prompt_value, config=None, **kwargs):
         self.prompts.append(prompt_value.to_string())
+        if self.erro is not None:
+            raise self.erro
         return AIMessage(content=self.resposta)
 
 

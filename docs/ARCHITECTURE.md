@@ -2,7 +2,7 @@
 
 ## Context and Drivers
 
-A aplicação é um pipeline local em Python que ingere um único `document.pdf`, persiste chunks e embeddings no PostgreSQL com pgVector e responde perguntas em uma CLI usando apenas o contexto recuperado (`docs/SPEC.md FR-1`; `docs/specs/02-pdf-ingestion.md FR-1–FR-4`; `docs/specs/03-semantic-retrieval.md FR-1–FR-6`; `docs/specs/04-cli-chat.md FR-1, FR-2, FR-5, FR-6`).
+A aplicação é um pipeline local em Python que ingere um único `document.pdf`, persiste chunks e embeddings no PostgreSQL com pgVector e responde perguntas em uma CLI usando apenas o contexto recuperado (`docs/SPEC.md FR-1`; `docs/specs/02-pdf-ingestion.md FR-1–FR-4`; `docs/specs/03-semantic-retrieval.md FR-1–FR-6`; `docs/specs/04-cli-chat.md FR-1, FR-2, FR-5–FR-8`).
 
 As interfaces públicas permanecem `docker compose up -d`, `python src/ingest.py` e `python src/chat.py` (`docs/SPEC.md AC-1`). A arquitetura deve privilegiar simplicidade, configuração externa e testes sem chamadas reais obrigatórias à OpenAI.
 

@@ -16,9 +16,16 @@ from search import (
 CHUNKS = [f"trecho numero {indice}" for indice in range(12)]
 
 
-def montar_cadeia(settings, conteudos=CHUNKS, erro=None):
+class FalhaDaOpenAI(Exception):
+    """Exceção com o módulo de origem do SDK, como as do provedor real."""
+
+
+FalhaDaOpenAI.__module__ = "openai"
+
+
+def montar_cadeia(settings, conteudos=CHUNKS, erro=None, erro_llm=None):
     store = FakeVectorStore(conteudos, erro=erro)
-    llm = RecordingLLM()
+    llm = RecordingLLM(erro=erro_llm)
     return search_prompt(settings=settings, store=store, llm=llm), store, llm
 
 
@@ -111,6 +118,34 @@ def test_falha_de_banco_na_consulta_vira_mensagem_clara(settings):
 
     assert "Falha ao consultar a collection" in str(falha.value)
     assert "linha de detalhe" not in str(falha.value)
+
+
+def test_falha_de_embedding_nao_e_atribuida_ao_banco(settings):
+    """Edge case: erro da OpenAI ao vetorizar aponta para a OpenAI, não para o banco."""
+    erro = FalhaDaOpenAI("Error code: 401 - Incorrect API key provided")
+    cadeia, _, _ = montar_cadeia(settings, erro=erro)
+
+    with pytest.raises(SearchError) as falha:
+        cadeia.invoke("pergunta")
+
+    assert "Não foi possível vetorizar a pergunta na OpenAI" in str(falha.value)
+    assert "OPENAI_EMBEDDING_MODEL" in str(falha.value)
+    assert "collection" not in str(falha.value)
+
+
+def test_falha_da_llm_vira_mensagem_clara(settings):
+    """Edge case: erro do provedor na geração interrompe com texto legível."""
+    erro = Exception(
+        "Error code: 404 - modelo inexistente\nframe interno do provedor"
+    )
+    cadeia, _, _ = montar_cadeia(settings, erro_llm=erro)
+
+    with pytest.raises(SearchError) as falha:
+        cadeia.invoke("pergunta")
+
+    assert "Não foi possível gerar a resposta com a LLM" in str(falha.value)
+    assert "OPENAI_LLM_MODEL" in str(falha.value)
+    assert "frame interno do provedor" not in str(falha.value)
 
 
 def test_erro_sem_mensagem_ainda_produz_texto_legivel(settings):

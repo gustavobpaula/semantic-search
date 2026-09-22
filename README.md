@@ -1,8 +1,8 @@
 # Busca semântica com LangChain e pgVector
 
 Ambiente local para ingestão de um PDF em PostgreSQL com pgVector e consulta
-semântica via OpenAI. A infraestrutura e a ingestão já estão disponíveis; a
-busca semântica e o chat serão adicionados nas próximas features.
+semântica via OpenAI. O fluxo completo está disponível: subir o banco, ingerir o
+PDF e conversar sobre ele no terminal.
 
 Este repositório é um fork de
 [devfullcycle/mba-ia-desafio-ingestao-busca](https://github.com/devfullcycle/mba-ia-desafio-ingestao-busca),
@@ -123,6 +123,38 @@ ingestão se recusa a gravar e pede a remoção da collection ou do volume — s
 isso a collection ficaria com vetores de tamanhos distintos e a busca deixaria
 de funcionar.
 
+## Chat
+
+Com o banco no ar e a ingestão concluída, inicie o chat:
+
+```bash
+python src/chat.py
+```
+
+Cada pergunta é vetorizada, os dez trechos mais relevantes são recuperados da
+collection e enviados à LLM dentro do prompt obrigatório. A resposta usa apenas
+o que está no documento:
+
+```text
+PERGUNTA: Qual o faturamento da Empresa SuperTechIABrazil?
+RESPOSTA: O faturamento foi de 10 milhões de reais.
+```
+
+Perguntas fora do documento — incluindo pedidos de opinião ou interpretação —
+recebem sempre a mesma resposta:
+
+```text
+PERGUNTA: Quantos clientes temos em 2024?
+RESPOSTA: Não tenho informações necessárias para responder sua pergunta.
+```
+
+Para encerrar a sessão, digite `sair` (ou `exit`/`quit`), ou use Ctrl+C ou
+Ctrl+D. Uma linha vazia é ignorada: o chat apenas pede a próxima pergunta, sem
+consultar o banco nem a OpenAI.
+
+Falhas de configuração, de conexão com o banco ou da OpenAI interrompem a
+sessão com mensagem explicativa e código de saída 1.
+
 ## Testes
 
 ```bash
@@ -139,10 +171,7 @@ TEST_DATABASE_URL='postgresql+psycopg://postgres:postgres@localhost:5432/rag' py
 Ele cria uma collection temporária com embeddings falsos e a remove ao final,
 sem tocar na collection da aplicação.
 
-## Próximas etapas
-
-O chat do terminal (`python src/chat.py`) será implementado nas próximas
-features, completando o fluxo:
+## Fluxo completo
 
 ```bash
 docker compose up -d
