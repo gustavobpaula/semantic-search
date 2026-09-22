@@ -2,7 +2,7 @@
 
 ## Context and Drivers
 
-A aplicação é um pipeline local em Python que ingere um único `document.pdf`, persiste chunks e embeddings no PostgreSQL com pgVector e responde perguntas em uma CLI usando apenas o contexto recuperado (`docs/SPEC.md FR-1`; `docs/specs/02-pdf-ingestion.md FR-1–FR-4`; `docs/specs/04-cli-chat.md FR-1–FR-6`).
+A aplicação é um pipeline local em Python que ingere um único `document.pdf`, persiste chunks e embeddings no PostgreSQL com pgVector e responde perguntas em uma CLI usando apenas o contexto recuperado (`docs/SPEC.md FR-1`; `docs/specs/02-pdf-ingestion.md FR-1–FR-4`; `docs/specs/03-semantic-retrieval.md FR-1–FR-6`; `docs/specs/04-cli-chat.md FR-1, FR-2, FR-5, FR-6`).
 
 As interfaces públicas permanecem `docker compose up -d`, `python src/ingest.py` e `python src/chat.py` (`docs/SPEC.md AC-1`). A arquitetura deve privilegiar simplicidade, configuração externa e testes sem chamadas reais obrigatórias à OpenAI.
 
@@ -14,7 +14,7 @@ As interfaces públicas permanecem `docker compose up -d`, `python src/ingest.py
 | Application framework | LangChain | Carregamento, divisão, modelos e vector store | Exigido por `docs/SPEC.md`, seção Constraints |
 | Models | OpenAI via LangChain | Embeddings e geração da resposta | `docs/SPEC.md` Constraints; identificadores externos |
 | Persistence | PostgreSQL com pgVector | Chunks, metadados e vetores | `docs/specs/02-pdf-ingestion.md FR-4` |
-| Local infrastructure | Docker Compose | Banco reproduzível | `docs/specs/01-infrastructure.md FR-1` |
+| Local infrastructure | Docker Compose do repositório de exemplo | Banco reproduzível | `docs/specs/01-infrastructure.md FR-1`; o arquivo é fixado a montante e não é redesenhado aqui |
 | Packaging | `requirements.txt` e virtualenv | Dependências reproduzíveis | `docs/specs/01-infrastructure.md FR-2, AC-2` |
 | Configuration | Variáveis de ambiente documentadas em `.env.example` | Banco, chave e modelos | `docs/specs/01-infrastructure.md FR-3` |
 | Testing | pytest, com dublês nas fronteiras externas | Testes unitários e de integração | Evitar custo e não determinismo da OpenAI |
@@ -25,12 +25,12 @@ Adotar um pipeline modular compacto:
 
 ```text
 document.pdf → ingestão → embeddings → pgVector
-                                         ↑
-CLI → recuperação semântica ─────────────┘
-CLI → contexto recuperado → LLM → resposta
+                                          ↑
+CLI → pergunta → recuperação semântica ───┘
+                 recuperação → contexto + prompt → LLM → resposta → CLI
 ```
 
-Ingestão, recuperação e chat são capacidades distintas. Configuração e construção de clientes podem ser compartilhadas, sem criar camadas de domínio, repositories genéricos ou interfaces de provedor sem uma segunda implementação concreta.
+Ingestão, recuperação e chat são capacidades distintas. A recuperação é dona da composição do contexto, do prompt obrigatório e da chamada à LLM (`docs/specs/03-semantic-retrieval.md FR-4–FR-6`); ao chat cabe a interação no terminal. Configuração e construção de clientes podem ser compartilhadas, sem criar camadas de domínio, repositories genéricos ou interfaces de provedor sem uma segunda implementação concreta.
 
 ## Directory Organization
 
@@ -41,11 +41,12 @@ Ingestão, recuperação e chat são capacidades distintas. Configuração e con
 | `tests/` | Testes unitários e de integração | Código de `src/`, dublês e banco de teste | Lógica reutilizada pela aplicação |
 | `docs/` | Especificação e decisões arquiteturais | Referências entre documentos | Código executável e configuração secreta |
 
-`src/ingest.py`, `src/search.py` e `src/chat.py` são contratos de execução definidos por `docs/SPEC.md`; a decomposição interna adicional permanece responsabilidade da implementação.
+`src/ingest.py`, `src/search.py` e `src/chat.py` são contratos de execução definidos por `docs/SPEC.md`; a decomposição interna adicional permanece responsabilidade da implementação. A fronteira pública da recuperação é `search_prompt()` em `src/search.py` (`docs/specs/03-semantic-retrieval.md FR-5–FR-6`).
 
 ## Dependency Rules
 
 - O chat pode depender da fronteira pública de recuperação; a recuperação não pode depender do chat.
+- O chat não monta o prompt nem chama a LLM por caminho próprio; ambos pertencem à recuperação.
 - A ingestão e a recuperação devem reutilizar a mesma configuração de embeddings, collection e banco.
 - Entrypoints coordenam o fluxo, mas regras reutilizáveis não devem depender de entrada ou saída do terminal.
 - Código de integração não deve importar entrypoints.
@@ -69,9 +70,9 @@ Cada integração deve possuir um ponto pequeno e substituível de construção 
 
 - Divisão: `chunk_size=1000` e `chunk_overlap=150` (`docs/specs/02-pdf-ingestion.md FR-2`).
 - Recuperação: mesma collection e `similarity_search_with_score(query, k=10)` (`docs/specs/03-semantic-retrieval.md FR-2–FR-3`).
-- O contexto contém os chunks na ordem retornada.
-- O prompt não pode enfraquecer as regras de fundamentação.
-- Ausência de informação ou solicitação de opinião deve produzir exatamente `Não tenho informações necessárias para responder sua pergunta.` (`docs/specs/04-cli-chat.md FR-4, FR-6`).
+- O contexto contém os chunks na ordem retornada (`docs/specs/03-semantic-retrieval.md FR-4`).
+- O prompt obrigatório não pode ser alterado nem ter suas regras de fundamentação enfraquecidas (`docs/specs/03-semantic-retrieval.md FR-5, AC-5`).
+- Ausência de informação ou solicitação de opinião deve produzir exatamente `Não tenho informações necessárias para responder sua pergunta.` (`docs/specs/03-semantic-retrieval.md FR-5`; `docs/specs/04-cli-chat.md FR-6`).
 
 ## Naming Conventions
 
